@@ -39,22 +39,21 @@ enum Commands {
 struct SaveCommand {
     #[command(subcommand)]
     visibility: Visibility,
-
-    #[command(flatten)]
-    key_value: KeyValuePair,
 }
 
 /// Whether the key-value pair should be public or secret
 #[derive(Debug, Subcommand)]
 enum Visibility {
     /// Store the value publicly
-    Public,
+    #[clap(visible_alias = "p")]
+    Public(KeyValuePair),
     /// Encrypt and store the value secretly
-    Secret,
+    #[clap(visible_alias = "s")]
+    Secret(KeyValuePair),
 }
 
-/// The key-value pair to save
-#[derive(Debug, Args)]
+/// The key-value pair
+#[derive(Debug, Parser)]
 struct KeyValuePair {
     /// Provide key for the value
     #[arg(short, long)]
