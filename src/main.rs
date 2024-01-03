@@ -1,7 +1,8 @@
 use clap::{Args, Parser, Subcommand};
 use db::db_client;
-use std::process;
+use std::{process, rc::Rc};
 
+mod cli;
 mod db;
 
 #[derive(Parser, Debug)]
@@ -64,23 +65,31 @@ struct KeyValuePair {
 }
 
 fn main() {
-    let _args = Cli::parse();
-    match _args.command {
-        Commands::Save(value) => println!("Key value: {:?}", value),
+    let cli = Cli::parse();
+
+    let db_client = Rc::new(db_client().unwrap_or_else(|err| {
+        eprintln!("Failed to make db connection: {}", err);
+        process::exit(1)
+    }));
+
+    db::create_default_db_schema(Rc::clone(&db_client)).unwrap_or_else(|err| {
+        eprintln!("Error during creating default db schema: {}", err);
+        process::exit(1);
+    });
+
+    match cli.command {
+        Commands::Save(value) => {
+            let saving_result = cli::save_entry(value, Rc::clone(&db_client));
+
+            match saving_result {
+                Ok(_) => println!("Successfully saved values"),
+                Err(e) => eprintln!("Error during saving results: {}", e),
+            }
+        }
         Commands::Read => todo!(),
         Commands::Edit => todo!(),
         Commands::Delete => todo!(),
     };
-
-    let db_client = db_client().unwrap_or_else(|err| {
-        eprintln!("Failed to make db connection: {}", err);
-        process::exit(1)
-    });
-
-    db::create_default_db_schema(&db_client).unwrap_or_else(|err| {
-        eprintln!("Error during creating default db schema: {}", err);
-        process::exit(1);
-    });
 }
 
 #[test]

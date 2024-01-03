@@ -1,5 +1,5 @@
 use rusqlite::{Connection, Result};
-use std::{env, fs, path::Path, process};
+use std::{env, fs, path::Path, process, rc::Rc};
 
 pub fn db_client() -> Result<Connection, rusqlite::Error> {
     let home_dir = env::var("HOME").unwrap_or_else(|_| {
@@ -16,7 +16,7 @@ pub fn db_client() -> Result<Connection, rusqlite::Error> {
     Connection::open(keychain_dir.join("credentials.db"))
 }
 
-pub fn create_default_db_schema(connection: &Connection) -> Result<()> {
+pub fn create_default_db_schema(connection: Rc<Connection>) -> Result<()> {
     connection.execute(
         "\n
 create table if not exists secret (
