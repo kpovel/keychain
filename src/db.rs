@@ -37,5 +37,15 @@ create table if not exists public (
         (),
     )?;
 
+    connection.execute(
+        "\n
+create table if not exists credentials (
+    id    integer primary key autoincrement,
+    name  varchar(50) not null unique,
+    value text not null
+);",
+        (),
+    )?;
+
     Ok(())
 }

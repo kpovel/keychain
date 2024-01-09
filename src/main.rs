@@ -4,6 +4,7 @@ use std::{process, rc::Rc};
 
 mod cli;
 mod db;
+mod crypto;
 
 #[derive(Parser, Debug)]
 #[command(
