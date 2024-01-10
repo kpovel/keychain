@@ -1,12 +1,12 @@
 use crate::{
-    crypto::{encrypt_value, hash_password},
+    crypto::{encrypt_value, hash_password, verify_password},
     KeyValuePair, SaveCommand,
 };
 use rusqlite::Connection;
 use std::{io, rc::Rc};
 
 #[derive(Debug)]
-enum CreatePassword {
+enum Password {
     Password(String),
     NotMatching,
 }
@@ -30,26 +30,20 @@ fn save_public_pair(key_value: KeyValuePair, connection: Rc<Connection>) -> Resu
 }
 
 fn save_private_pair(key_value: KeyValuePair, conn: Rc<Connection>) -> Result<(), String> {
-    let pass = match secret_password(Rc::clone(&conn)) {
-        Ok(sp) => sp,
-        Err(e) => match e {
-            rusqlite::Error::QueryReturnedNoRows => {
-                let new_pass = create_password().map_err(|e| e.to_string())?;
+    let hashed_pass = secret_password(Rc::clone(&conn));
 
-                match new_pass {
-                    CreatePassword::Password(pass) => match save_password(Rc::clone(&conn), pass) {
-                        Ok(hashed_pass) => hashed_pass,
-                        Err(e) => return Err(e),
-                    },
-                    CreatePassword::NotMatching => {
-                        return Err(String::from("Passwords are not matching"))
-                    }
-                }
+    let pass = match hashed_pass {
+        Ok(hash) => {
+            let pass = verify_user_passowrd(&hash)?;
+            match pass {
+                Password::Password(pass) => pass,
+                Password::NotMatching => return Err(String::from("Passwords are not matching")),
             }
-            _ => {
-                return Err(e.to_string());
-            }
-        },
+        }
+        Err(e) => {
+            let new_pass = create_new_password(e, Rc::clone(&conn))?;
+            new_pass
+        }
     };
 
     let encrypted_value = encrypt_value(&key_value.value, &pass);
@@ -63,7 +57,42 @@ fn save_private_pair(key_value: KeyValuePair, conn: Rc<Connection>) -> Result<()
     Ok(())
 }
 
-fn save_password(conn: Rc<Connection>, pass: String) -> Result<String, String> {
+fn verify_user_passowrd(hashed_pass: &str) -> Result<Password, String> {
+    let pass = prompt_password().map_err(|e| e.to_string())?;
+    match verify_password(&pass, &hashed_pass) {
+        Ok(v) if v == true => Ok(Password::Password(pass)),
+        Ok(_) => Ok(Password::NotMatching),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+fn prompt_password() -> Result<String, std::io::Error> {
+    println!("Enter your password to verify your identity: ");
+
+    // todo: hide the password
+    let mut pass = String::new();
+    io::stdin().read_line(&mut pass)?;
+
+    Ok(pass)
+}
+
+fn create_new_password(err: rusqlite::Error, conn: Rc<Connection>) -> Result<String, String> {
+    if let rusqlite::Error::QueryReturnedNoRows = err {
+        let new_pass = create_password().map_err(|e| e.to_string())?;
+
+        match new_pass {
+            Password::Password(pass) => {
+                save_password(Rc::clone(&conn), &pass)?;
+                return Ok(pass);
+            }
+            Password::NotMatching => Err(String::from("Passwords are not matching")),
+        }
+    } else {
+        Err(err.to_string())
+    }
+}
+
+fn save_password(conn: Rc<Connection>, pass: &str) -> Result<String, String> {
     let hashed_pass = hash_password(&pass).map_err(|e| e.to_string())?;
 
     conn.execute(
@@ -75,7 +104,7 @@ fn save_password(conn: Rc<Connection>, pass: String) -> Result<String, String> {
     Ok(hashed_pass)
 }
 
-fn create_password() -> Result<CreatePassword, std::io::Error> {
+fn create_password() -> Result<Password, std::io::Error> {
     println!("Let's create a secret password: ");
 
     // todo: hide the password
@@ -87,8 +116,8 @@ fn create_password() -> Result<CreatePassword, std::io::Error> {
     io::stdin().read_line(&mut pass_repeat)?;
 
     match pass == pass_repeat {
-        true => Ok(CreatePassword::Password(pass)),
-        false => Ok(CreatePassword::NotMatching),
+        true => Ok(Password::Password(pass)),
+        false => Ok(Password::NotMatching),
     }
 }
 
