@@ -1,4 +1,7 @@
-use crate::{crypto::hash_password, KeyValuePair, SaveCommand};
+use crate::{
+    crypto::{encrypt_value, hash_password},
+    KeyValuePair, SaveCommand,
+};
 use rusqlite::Connection;
 use std::{io, rc::Rc};
 
@@ -15,18 +18,18 @@ pub fn save_entry(value: SaveCommand, connection: Rc<Connection>) -> Result<(), 
     }
 }
 
-fn save_public_pair(value: KeyValuePair, connection: Rc<Connection>) -> Result<(), String> {
+fn save_public_pair(key_value: KeyValuePair, connection: Rc<Connection>) -> Result<(), String> {
     connection
         .execute(
             "insert into public (key, value) values (?1, ?2)",
-            (&value.key, &value.value),
+            (&key_value.key, &key_value.value),
         )
         .map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
-fn save_private_pair(value: KeyValuePair, conn: Rc<Connection>) -> Result<(), String> {
+fn save_private_pair(key_value: KeyValuePair, conn: Rc<Connection>) -> Result<(), String> {
     let pass = match secret_password(Rc::clone(&conn)) {
         Ok(sp) => sp,
         Err(e) => match e {
@@ -34,7 +37,7 @@ fn save_private_pair(value: KeyValuePair, conn: Rc<Connection>) -> Result<(), St
                 let new_pass = create_password().map_err(|e| e.to_string())?;
 
                 match new_pass {
-                    CreatePassword::Password(pass) => match save_password(conn, pass) {
+                    CreatePassword::Password(pass) => match save_password(Rc::clone(&conn), pass) {
                         Ok(hashed_pass) => hashed_pass,
                         Err(e) => return Err(e),
                     },
@@ -49,11 +52,27 @@ fn save_private_pair(value: KeyValuePair, conn: Rc<Connection>) -> Result<(), St
         },
     };
 
-    println!("Pass: {}", pass);
+    let encrypted_value = encrypt_value(&key_value.value, &pass);
 
-    todo!("save private key-value");
+    conn.execute(
+        "insert into secret (key, value) values (?1, ?2)",
+        (&key_value.key, &encrypted_value),
+    )
+    .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+fn save_password(conn: Rc<Connection>, pass: String) -> Result<String, String> {
+    let hashed_pass = hash_password(&pass).map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "insert into credentials (name, value) values ($1, $2)",
+        ("password", &hashed_pass),
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(hashed_pass)
 }
 
 fn create_password() -> Result<CreatePassword, std::io::Error> {
@@ -71,18 +90,6 @@ fn create_password() -> Result<CreatePassword, std::io::Error> {
         true => Ok(CreatePassword::Password(pass)),
         false => Ok(CreatePassword::NotMatching),
     }
-}
-
-fn save_password(conn: Rc<Connection>, pass: String) -> Result<String, String> {
-    let hashed_pass = hash_password(&pass).map_err(|e| e.to_string())?;
-
-    conn.execute(
-        "insert into credentials (name, value) values ($1, $2)",
-        ("password", &hashed_pass),
-    )
-    .map_err(|e| e.to_string())?;
-
-    Ok(hashed_pass)
 }
 
 fn secret_password(conn: Rc<Connection>) -> Result<String, rusqlite::Error> {

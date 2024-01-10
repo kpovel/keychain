@@ -1,19 +1,16 @@
 use bcrypt::{BcryptError, DEFAULT_COST};
-use magic_crypt::{MagicCrypt256, MagicCryptTrait};
-use std::error::Error;
+use magic_crypt::{new_magic_crypt, MagicCryptError, MagicCryptTrait};
 
-pub fn encrypt_value(mcrypt: &MagicCrypt256, pass: &str) -> Vec<u8> {
-    mcrypt.encrypt_str_to_bytes(pass)
+pub fn encrypt_value(value: &str, pass: &str) -> String {
+    let mc = new_magic_crypt!(pass, 256);
+    mc.encrypt_str_to_base64(value)
 }
 
-pub fn decrypt_value(
-    mcrypt: &MagicCrypt256,
-    encrypted_string: &Vec<u8>,
-) -> Result<String, Box<dyn Error>> {
-    let decrypted_bytes = mcrypt.decrypt_bytes_to_bytes(&encrypted_string)?;
-    let decrypted_str = std::str::from_utf8(&decrypted_bytes)?;
+pub fn decrypt_value(encrypted_string: &str, pass: &str) -> Result<String, MagicCryptError> {
+    let mc = new_magic_crypt!(pass, 256);
+    let decrypted_val = mc.decrypt_base64_to_string(encrypted_string)?;
 
-    Ok(decrypted_str.to_string())
+    Ok(decrypted_val)
 }
 
 pub fn hash_password(pass: &str) -> Result<String, BcryptError> {
