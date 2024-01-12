@@ -1,6 +1,6 @@
 use crate::{
+    cli::KeyValuePair,
     crypto::{encrypt_value, hash_password, verify_password},
-    KeyValuePair,
 };
 use rusqlite::Connection;
 use std::{io, rc::Rc};

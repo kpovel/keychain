@@ -1,4 +1,4 @@
-use crate::KeyValuePair;
+use crate::cli::KeyValuePair;
 use rusqlite::Connection;
 use std::rc::Rc;
 
