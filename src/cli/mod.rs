@@ -25,6 +25,9 @@ pub enum Commands {
     /// Read a keychain entry
     #[clap(visible_alias = "r")]
     Read,
+    #[clap(visible_alias = "l")]
+    /// List of all keychain entries
+    List,
     /// Edit a keychain entry
     #[clap(visible_alias = "e")]
     Edit,

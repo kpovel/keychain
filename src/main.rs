@@ -30,6 +30,7 @@ fn main() {
             }
         }
         Commands::Read => todo!(),
+        Commands::List => todo!(),
         Commands::Edit => todo!(),
         Commands::Delete => todo!(),
     };
