@@ -1,5 +1,5 @@
 use clap::Parser;
-use cli::{list_entry, Cli, Commands};
+use cli::{list_entry, read_entry, Cli, Commands};
 use db::db_client;
 use std::{process, rc::Rc};
 
@@ -29,7 +29,10 @@ fn main() {
                 Err(e) => eprintln!("Error during saving results: {}", e),
             }
         }
-        Commands::Read => todo!(),
+        Commands::Read(command) => match read_entry(command, Rc::clone(&db_client)) {
+            Ok(v) => println!("{}", v),
+            Err(e) => eprintln!("Error during reading value: {}", e),
+        },
         Commands::List(subcommand) => {
             list_entry(subcommand, Rc::clone(&db_client)).unwrap_or_else(|e| {
                 eprintln!("Error during showing list of entries: {}", e.to_string());

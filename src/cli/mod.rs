@@ -1,8 +1,10 @@
 use clap::{command, Args, Parser, Subcommand};
 pub use list::list_entry;
+pub use read::read_entry;
 pub use save::save_entry;
 
 mod list;
+mod read;
 mod save;
 
 #[derive(Parser, Debug)]
@@ -26,7 +28,7 @@ pub enum Commands {
     Save(SaveCommand),
     /// Read a keychain entry
     #[clap(visible_alias = "r")]
-    Read,
+    Read(ReadCommand),
     #[clap(visible_alias = "l")]
     #[command(subcommand)]
     /// List of all keychain entries
@@ -43,12 +45,12 @@ pub enum Commands {
 #[derive(Debug, Args)]
 pub struct SaveCommand {
     #[command(subcommand)]
-    pub visibility: Visibility,
+    pub visibility: VisibilitySave,
 }
 
 /// Whether the key-value pair should be public or secret
 #[derive(Debug, Subcommand)]
-pub enum Visibility {
+pub enum VisibilitySave {
     /// Store the value publicly
     #[clap(visible_alias = "p")]
     Public(KeyValuePair),
@@ -66,6 +68,29 @@ pub struct KeyValuePair {
     /// Provide value
     #[arg(short, long)]
     pub value: String,
+}
+
+#[derive(Debug, Args)]
+pub struct ReadCommand {
+    #[command(subcommand)]
+    pub visibility: ReadSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ReadSubcommand {
+    #[clap(visible_alias = "p")]
+    /// Read public entry
+    Public(KeyEntry),
+    #[clap(visible_alias = "s")]
+    /// Read secret entry
+    Secret(KeyEntry),
+}
+
+#[derive(Debug, Args)]
+pub struct KeyEntry {
+    /// Provide key for the value
+    #[arg(short, long)]
+    pub key: String,
 }
 
 #[derive(Debug, Subcommand)]

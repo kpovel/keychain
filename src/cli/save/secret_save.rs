@@ -6,7 +6,7 @@ use rusqlite::Connection;
 use std::{io, rc::Rc};
 
 #[derive(Debug)]
-enum VerifyPassword {
+pub enum VerifyPassword {
     Password(String),
     NotMatching,
 }
@@ -45,7 +45,7 @@ pub fn save_secret_pair(key_value: KeyValuePair, conn: Rc<Connection>) -> Result
     Ok(())
 }
 
-fn verify_user_password(hashed_pass: &str) -> Result<VerifyPassword, String> {
+pub fn verify_user_password(hashed_pass: &str) -> Result<VerifyPassword, String> {
     let pass = prompt_password().map_err(|e| e.to_string())?;
     match verify_password(&pass, &hashed_pass) {
         Ok(true) => Ok(VerifyPassword::Password(pass)),
@@ -54,7 +54,7 @@ fn verify_user_password(hashed_pass: &str) -> Result<VerifyPassword, String> {
     }
 }
 
-fn prompt_password() -> Result<String, io::Error> {
+pub fn prompt_password() -> Result<String, io::Error> {
     println!("Enter your password to verify your identity: ");
 
     // todo: hide the password
@@ -105,7 +105,7 @@ fn create_password() -> Result<VerifyPassword, io::Error> {
     }
 }
 
-fn secret_password(conn: Rc<Connection>) -> Result<String, rusqlite::Error> {
+pub fn secret_password(conn: Rc<Connection>) -> Result<String, rusqlite::Error> {
     let mut stmt = conn.prepare("select value from credentials where name = 'password'")?;
     stmt.query_row([], |row| Ok(row.get(0)?))
 }
