@@ -1,5 +1,5 @@
 use clap::Parser;
-use cli::{Cli, Commands};
+use cli::{list_entry, Cli, Commands};
 use db::db_client;
 use std::{process, rc::Rc};
 
@@ -30,7 +30,11 @@ fn main() {
             }
         }
         Commands::Read => todo!(),
-        Commands::List => todo!(),
+        Commands::List(subcommand) => {
+            list_entry(subcommand, Rc::clone(&db_client)).unwrap_or_else(|e| {
+                eprintln!("Error during showing list of entries: {}", e.to_string());
+            });
+        }
         Commands::Edit => todo!(),
         Commands::Delete => todo!(),
     };

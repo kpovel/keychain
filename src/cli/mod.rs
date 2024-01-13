@@ -1,6 +1,8 @@
 use clap::{command, Args, Parser, Subcommand};
+pub use list::list_entry;
 pub use save::save_entry;
 
+mod list;
 mod save;
 
 #[derive(Parser, Debug)]
@@ -26,8 +28,9 @@ pub enum Commands {
     #[clap(visible_alias = "r")]
     Read,
     #[clap(visible_alias = "l")]
+    #[command(subcommand)]
     /// List of all keychain entries
-    List,
+    List(ListSubcommand),
     /// Edit a keychain entry
     #[clap(visible_alias = "e")]
     Edit,
@@ -63,6 +66,16 @@ pub struct KeyValuePair {
     /// Provide value
     #[arg(short, long)]
     pub value: String,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ListSubcommand {
+    #[clap(visible_alias = "p")]
+    /// List of public keychain entries
+    Public,
+    #[clap(visible_alias = "s")]
+    /// List of secret keychain entries
+    Secret,
 }
 
 #[test]
