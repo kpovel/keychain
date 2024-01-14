@@ -1,5 +1,5 @@
 use clap::Parser;
-use cli::{delete_entry, list_entry, read_entry, Cli, Commands};
+use cli::{delete_entry, edit_entry, list_entry, read_entry, Cli, Commands};
 use db::db_client;
 use std::{process, rc::Rc};
 
@@ -38,12 +38,13 @@ fn main() {
                 eprintln!("Error during showing list of entries: {}", e.to_string());
             });
         }
-        Commands::Edit => todo!(),
-        Commands::Delete(command) => {
-            match delete_entry(command, Rc::clone(&db_client)) {
-                Ok(res) => println!("{}", res),
-                Err(e) => eprintln!("Error during deleting key-value pair: {}", e),
-            }
-        }
+        Commands::Edit(command) => match edit_entry(command, Rc::clone(&db_client)) {
+            Ok(res) => println!("{}", res),
+            Err(e) => eprintln!("Error during editing key value: {}", e),
+        },
+        Commands::Delete(command) => match delete_entry(command, Rc::clone(&db_client)) {
+            Ok(res) => println!("{}", res),
+            Err(e) => eprintln!("Error during deleting key-value pair: {}", e),
+        },
     };
 }
