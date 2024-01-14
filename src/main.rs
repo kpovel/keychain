@@ -1,5 +1,5 @@
 use clap::Parser;
-use cli::{list_entry, read_entry, Cli, Commands};
+use cli::{delete_entry, list_entry, read_entry, Cli, Commands};
 use db::db_client;
 use std::{process, rc::Rc};
 
@@ -39,6 +39,10 @@ fn main() {
             });
         }
         Commands::Edit => todo!(),
-        Commands::Delete => todo!(),
+        Commands::Delete(command) => {
+            delete_entry(command, Rc::clone(&db_client)).unwrap_or_else(|e| {
+                eprintln!("Error during deleting key-value pair: {}", e);
+            });
+        }
     };
 }

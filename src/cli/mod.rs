@@ -2,10 +2,12 @@ use clap::{command, Args, Parser, Subcommand};
 pub use list::list_entry;
 pub use read::read_entry;
 pub use save::save_entry;
+pub use delete::delete_entry;
 
 mod list;
 mod read;
 mod save;
+mod delete;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -38,7 +40,7 @@ pub enum Commands {
     Edit,
     /// Delete a keychain entry
     #[clap(visible_alias = "d")]
-    Delete,
+    Delete(DeleteCommand),
 }
 
 /// Save a new public or secret key-value pair
@@ -101,6 +103,22 @@ pub enum ListSubcommand {
     #[clap(visible_alias = "s")]
     /// List of secret keychain entries
     Secret,
+}
+
+#[derive(Debug, Args)]
+pub struct DeleteCommand {
+    #[command(subcommand)]
+    pub visibility: ReadSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DeleteSubcommand {
+    #[clap(visible_alias = "p")]
+    /// Delete public entry
+    Public(KeyEntry),
+    #[clap(visible_alias = "s")]
+    /// Delete secret entry
+    Secret(KeyEntry),
 }
 
 #[test]
