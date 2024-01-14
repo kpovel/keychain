@@ -17,20 +17,20 @@ pub fn delete_public_pair(
     Ok(DeleteAction::Deleted)
 }
 
-fn verify_action(entry: &KeyEntry) -> bool {
+pub fn verify_action(entry: &KeyEntry) -> bool {
     println!(
         "Are you sure you want to continue deliting {} [Y/n]: ",
         entry.key
     );
 
-    let mut pass = String::new();
-    let stdin_err = io::stdin().read_line(&mut pass);
+    let mut delete_value = String::new();
+    let stdin_err = io::stdin().read_line(&mut delete_value);
 
     if stdin_err.is_err() {
         return false;
     }
 
-    match pass.trim().to_lowercase().as_str() {
+    match delete_value.trim().to_lowercase().as_str() {
         "y" => true,
         _ => false,
     }

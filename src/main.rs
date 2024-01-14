@@ -40,9 +40,10 @@ fn main() {
         }
         Commands::Edit => todo!(),
         Commands::Delete(command) => {
-            delete_entry(command, Rc::clone(&db_client)).unwrap_or_else(|e| {
-                eprintln!("Error during deleting key-value pair: {}", e);
-            });
+            match delete_entry(command, Rc::clone(&db_client)) {
+                Ok(res) => println!("{}", res),
+                Err(e) => eprintln!("Error during deleting key-value pair: {}", e),
+            }
         }
     };
 }
