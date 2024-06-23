@@ -3,7 +3,7 @@ use crate::{
     crypto::{encrypt_value, hash_password, verify_password},
 };
 use rusqlite::Connection;
-use std::{io, rc::Rc};
+use std::{io, process::Command, rc::Rc};
 
 #[derive(Debug)]
 pub enum VerifyPassword {
@@ -57,7 +57,7 @@ pub fn verify_user_password(hashed_pass: &str) -> Result<VerifyPassword, String>
 pub fn prompt_password() -> Result<String, io::Error> {
     println!("Enter your password to verify your identity: ");
 
-    // todo: hide the password
+    Command::new("stty").arg("-echo").spawn().unwrap();
     let mut pass = String::new();
     io::stdin().read_line(&mut pass)?;
 
